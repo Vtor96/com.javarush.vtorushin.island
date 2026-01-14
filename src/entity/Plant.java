@@ -5,8 +5,12 @@ import util.Settings;
 
 public class Plant implements Eatable {
     private Location location;
+    private boolean alive = true;
 
-    public Plant(Location location) {
+    public Plant() {
+    }
+
+    public void setLocation(Location location) {
         this.location = location;
     }
 
@@ -18,6 +22,16 @@ public class Plant implements Eatable {
     @Override
     public String getType() {
         return "Plant";
+    }
+
+    @Override
+    public boolean isAlive() {
+        return alive;
+    }
+
+    @Override
+    public void die() {
+        this.alive = false;
     }
 
     @Override

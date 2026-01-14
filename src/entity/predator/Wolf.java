@@ -7,4 +7,3 @@ public class Wolf extends Carnivore {
         super(l);
     }
 }
-

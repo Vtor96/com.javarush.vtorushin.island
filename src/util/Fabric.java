@@ -18,7 +18,7 @@ public class Fabric {
         int maxPlants = Settings.SPECIES.get("Plant").maxCount;
         int plantCount = random.nextInt(maxPlants + 1);
         for (int i = 0; i < plantCount; i++) {
-            loc.addPlant(new Plant(loc));
+            loc.addPlant(new Plant());
         }
 
         for (int i = 0; i < 3; i++) {
@@ -28,6 +28,16 @@ public class Fabric {
         for (int i = 0; i < 2; i++) {
             Animal pred = AnimalFactory.randomCarnivore(loc);
             loc.addAnimal(pred);
+        }
+    }
+
+    public static void growPlants(Location loc) {
+        int current = loc.getPlants().size();
+        int toGrow = Settings.MAX_PLANTS_PER_CELL - current;
+        if (toGrow > 0) {
+            for (int i = 0; i < toGrow; i++) {
+                loc.addPlant(new Plant());
+            }
         }
     }
 }

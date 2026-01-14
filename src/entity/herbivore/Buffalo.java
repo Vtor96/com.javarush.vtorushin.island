@@ -7,4 +7,3 @@ public class Buffalo extends Herbivore {
         super(l);
     }
 }
-

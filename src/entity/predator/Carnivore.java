@@ -12,4 +12,9 @@ abstract class Carnivore extends Animal {
     public String getType() {
         return this.getClass().getSimpleName();
     }
+
+    @Override
+    public boolean isAlive() {
+        return super.isAlive();
+    }
 }
