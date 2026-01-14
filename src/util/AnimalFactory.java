@@ -16,6 +16,7 @@ public class AnimalFactory {
             Horse.class, Deer.class, Rabbit.class, Mouse.class, Goat.class,
             Sheep.class, Boar.class, Buffalo.class, Duck.class, Caterpillar.class
     );
+
     private static final List<Class<? extends Animal>> carnivoreTypes = Arrays.asList(
             Wolf.class, Boa.class, Fox.class, Bear.class, Eagle.class
     );

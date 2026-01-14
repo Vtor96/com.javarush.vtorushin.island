@@ -11,9 +11,9 @@ public class Main {
         System.out.println("Остров создан: " +
                 island.getWidth() + "x" + island.getHeight() + " клеток");
 
-        Location first = island.getLocation(0, 0);
-        Fabric.initLocation(first);
+        Fabric.initIsland(island);
 
+        Location first = island.getLocation(0, 0);
         System.out.println("\nНачальное состояние локации (0,0):");
         System.out.println("Растения: " + first.getPlants().size());
         System.out.println("Животные:");
@@ -21,6 +21,21 @@ public class Main {
             System.out.println("  - " + a.getType() +
                     " (возраст: " + a.age + ", живое: " + a.isAlive() + ")");
         }
+
+        int totalAnimals = 0;
+        int totalPlants = 0;
+        for (int y = 0; y < island.getHeight(); y++) {
+            for (int x = 0; x < island.getWidth(); x++) {
+                Location loc = island.getLocation(x, y);
+                if (loc != null) {
+                    totalAnimals += loc.getAnimals().size();
+                    totalPlants += loc.getPlants().size();
+                }
+            }
+        }
+        System.out.println("\nОбщая статистика острова:");
+        System.out.println("Всего животных: " + totalAnimals);
+        System.out.println("Всего растений: " + totalPlants);
 
         System.out.println("\nЗапуск симуляции...");
         SimulationScheduler.start(island);

@@ -121,7 +121,7 @@ public abstract class Animal implements Eatable {
         }
 
         if (satiety >= 1.0) {
-            return false; // Уже сыт
+            return false;
         }
 
         String animalType = getType();
@@ -130,33 +130,45 @@ public abstract class Animal implements Eatable {
             return false;
         }
 
+        boolean ateSomething = false;
+
         List<Animal> animals = location.getAnimals();
         for (Animal potentialFood : new java.util.ArrayList<>(animals)) {
             if (potentialFood != this && potentialFood.isAlive()) {
                 String foodType = potentialFood.getType();
                 if (probabilities.containsKey(foodType)) {
                     if (eat(potentialFood)) {
-                        return true;
+                        ateSomething = true;
+                        if (satiety < 0.3 && satiety < 1.0) {
+                        } else {
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        List<Plant> plants = location.getPlants();
-        if (probabilities.containsKey("Plant")) {
-            for (Plant plant : new java.util.ArrayList<>(plants)) {
-                if (plant.isAlive()) {
-                    if (eat(plant)) {
-                        return true;
+        if (satiety < 1.0) {
+            List<Plant> plants = location.getPlants();
+            if (probabilities.containsKey("Plant")) {
+                for (Plant plant : new java.util.ArrayList<>(plants)) {
+                    if (plant.isAlive()) {
+                        if (eat(plant)) {
+                            ateSomething = true;
+                            if (satiety >= 0.8) {
+                                break;
+                            }
+                        }
                     }
                 }
             }
         }
-        return false;
+
+        return ateSomething;
     }
 
     public Animal reproduce() {
-        if (!isAlive() || location == null || satiety < 0.5) {
+        if (!isAlive() || location == null || satiety < 0.3) {
             return null;
         }
 
@@ -164,21 +176,22 @@ public abstract class Animal implements Eatable {
         int sameTypeCount = 0;
 
         for (Animal animal : location.getAnimals()) {
-            if (animal != this && animal.getType().equals(myType) && animal.isAlive()) {
+            if (animal.getType().equals(myType) && animal.isAlive()) {
                 sameTypeCount++;
             }
         }
 
-        if (sameTypeCount < 1) {
+        if (sameTypeCount < 2) {
             return null;
         }
 
-        if (random.nextDouble() < 0.5) {
+        double reproductionChance = 0.3 * satiety;
+        if (random.nextDouble() < reproductionChance) {
             try {
                 Class<? extends Animal> animalClass = this.getClass();
                 Animal offspring = animalClass.getDeclaredConstructor(Location.class).newInstance(location);
 
-                satiety *= 0.5;
+                satiety *= 0.7;
 
                 return offspring;
             } catch (Exception e) {
@@ -192,7 +205,7 @@ public abstract class Animal implements Eatable {
     public void decreaseSatiety() {
         if (isAlive()) {
             double foodRequired = Settings.SPECIES.get(getType()).foodRequired;
-            satiety -= (foodRequired / 100.0) * 0.1;
+            satiety -= (foodRequired / 1000.0) * 0.05;
             if (satiety < 0) {
                 satiety = 0;
             }

@@ -7,8 +7,7 @@ public class Plant implements Eatable {
     private Location location;
     private boolean alive = true;
 
-    public Plant() {
-    }
+    public Plant() {}
 
     public void setLocation(Location location) {
         this.location = location;

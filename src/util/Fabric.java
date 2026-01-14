@@ -15,27 +15,67 @@ public class Fabric {
     }
 
     public static void initLocation(Location loc) {
+        if (loc == null) {
+            return;
+        }
+
         int maxPlants = Settings.SPECIES.get("Plant").maxCount;
-        int plantCount = random.nextInt(maxPlants + 1);
+        int minPlants = maxPlants / 3;
+        int plantCount = minPlants + random.nextInt(maxPlants - minPlants + 1);
         for (int i = 0; i < plantCount; i++) {
             loc.addPlant(new Plant());
         }
 
-        for (int i = 0; i < 3; i++) {
+        int herbivoreCount = 5 + random.nextInt(4);
+        for (int i = 0; i < herbivoreCount; i++) {
             Animal herb = AnimalFactory.randomHerbivore(loc);
-            loc.addAnimal(herb);
+            if (herb != null) {
+                loc.addAnimal(herb);
+            }
         }
-        for (int i = 0; i < 2; i++) {
+
+        int predatorCount = 2 + random.nextInt(3);
+        for (int i = 0; i < predatorCount; i++) {
             Animal pred = AnimalFactory.randomCarnivore(loc);
-            loc.addAnimal(pred);
+            if (pred != null) {
+                loc.addAnimal(pred);
+            }
         }
     }
 
+    public static void initIsland(Island island) {
+        if (island == null) {
+            return;
+        }
+
+        System.out.println("Инициализация острова...");
+        int totalLocations = 0;
+
+        for (int y = 0; y < Settings.ISLAND_HEIGHT; y++) {
+            for (int x = 0; x < Settings.ISLAND_WIDTH; x++) {
+                Location loc = island.getLocation(x, y);
+                if (loc != null) {
+                    initLocation(loc);
+                    totalLocations++;
+                }
+            }
+        }
+
+        System.out.println("Инициализировано локаций: " + totalLocations);
+    }
+
     public static void growPlants(Location loc) {
+        if (loc == null) {
+            return;
+        }
+
         int current = loc.getPlants().size();
-        int toGrow = Settings.MAX_PLANTS_PER_CELL - current;
-        if (toGrow > 0) {
-            for (int i = 0; i < toGrow; i++) {
+        int maxPlants = Settings.MAX_PLANTS_PER_CELL;
+
+        if (current < maxPlants * 0.8) {
+            int toGrow = maxPlants - current;
+            int newPlants = Math.min(1 + random.nextInt(3), toGrow);
+            for (int i = 0; i < newPlants; i++) {
                 loc.addPlant(new Plant());
             }
         }
