@@ -1,7 +1,8 @@
 import entity.island.Island;
 import entity.island.Location;
 import entity.Animal;
-import util.Fabric;
+import repository.Fabric;
+import service.SimulationScheduler;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,29 +14,39 @@ public class Main {
 
         Fabric.initIsland(island);
 
-        Location first = island.getLocation(0, 0);
-        System.out.println("\nНачальное состояние локации (0,0):");
-        System.out.println("Растения: " + first.getPlants().size());
-        System.out.println("Животные:");
-        for (Animal a : first.getAnimals()) {
-            System.out.println("  - " + a.getType() +
-                    " (возраст: " + a.age + ", живое: " + a.isAlive() + ")");
-        }
-
-        int totalAnimals = 0;
-        int totalPlants = 0;
-        for (int y = 0; y < island.getHeight(); y++) {
-            for (int x = 0; x < island.getWidth(); x++) {
-                Location loc = island.getLocation(x, y);
-                if (loc != null) {
-                    totalAnimals += loc.getAnimals().size();
-                    totalPlants += loc.getPlants().size();
+        try {
+            Location first = island.getLocation(0, 0);
+            if (first != null) {
+                System.out.println("\nНачальное состояние локации (0,0):");
+                System.out.println("Растения: " + first.getPlants().size());
+                System.out.println("Животные:");
+                for (Animal a : first.getAnimals()) {
+                    System.out.println("  - " + a.getType() +
+                            " (возраст: " + a.age + ", живое: " + a.isAlive() + ")");
                 }
             }
+        } catch (Exception e) {
+            System.err.println("Ошибка при выводе начального состояния: " + e.getMessage());
         }
-        System.out.println("\nОбщая статистика острова:");
-        System.out.println("Всего животных: " + totalAnimals);
-        System.out.println("Всего растений: " + totalPlants);
+
+        try {
+            int totalAnimals = 0;
+            int totalPlants = 0;
+            for (int y = 0; y < island.getHeight(); y++) {
+                for (int x = 0; x < island.getWidth(); x++) {
+                    Location loc = island.getLocation(x, y);
+                    if (loc != null) {
+                        totalAnimals += loc.getAnimals().size();
+                        totalPlants += loc.getPlants().size();
+                    }
+                }
+            }
+            System.out.println("\nОбщая статистика острова:");
+            System.out.println("Всего животных: " + totalAnimals);
+            System.out.println("Всего растений: " + totalPlants);
+        } catch (Exception e) {
+            System.err.println("Ошибка при подсчете статистики: " + e.getMessage());
+        }
 
         System.out.println("\nЗапуск симуляции...");
         SimulationScheduler.start(island);
@@ -47,17 +58,28 @@ public class Main {
             Thread.currentThread().interrupt();
             System.err.println("Прервано ожидание");
         } finally {
-            SimulationScheduler.shutdown();
+            try {
+                SimulationScheduler.shutdown();
+            } catch (Exception e) {
+                System.err.println("Ошибка при остановке симуляции: " + e.getMessage());
+            }
 
-            System.out.println("\nФинальное состояние локации (0,0):");
-            System.out.println("Растения: " + first.getPlants().size());
-            System.out.println("Животные:");
-            for (Animal a : first.getAnimals()) {
-                if (a.isAlive()) {
-                    System.out.println("  - " + a.getType() +
-                            " (возраст: " + a.age + ", насыщение: " +
-                            String.format("%.2f", a.getSatiety()) + ")");
+            try {
+                Location first = island.getLocation(0, 0);
+                if (first != null) {
+                    System.out.println("\nФинальное состояние локации (0,0):");
+                    System.out.println("Растения: " + first.getPlants().size());
+                    System.out.println("Животные:");
+                    for (Animal a : first.getAnimals()) {
+                        if (a.isAlive()) {
+                            System.out.println("  - " + a.getType() +
+                                    " (возраст: " + a.age + ", насыщение: " +
+                                    String.format("%.2f", a.getSatiety()) + ")");
+                        }
+                    }
                 }
+            } catch (Exception e) {
+                System.err.println("Ошибка при выводе финального состояния: " + e.getMessage());
             }
         }
     }

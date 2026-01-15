@@ -1,9 +1,10 @@
 package entity.island;
 
+
+import config.Settings;
+import config.SpeciesInfo;
 import entity.Animal;
 import entity.Plant;
-import util.Settings;
-import util.SpeciesInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,26 +27,30 @@ public class Location {
             return false;
         }
 
-        String type = a.getType();
-        SpeciesInfo speciesInfo = Settings.SPECIES.get(type);
+        try {
+            String type = a.getType();
+            SpeciesInfo speciesInfo = Settings.SPECIES.get(type);
 
-        if (speciesInfo == null) {
+            if (speciesInfo == null) {
+                return false;
+            }
+
+            int maxForSpecies = speciesInfo.maxCount;
+
+            long countOfSameType = animals.stream()
+                    .filter(an -> an.getType().equals(type) && an.isAlive())
+                    .count();
+
+            if (countOfSameType < maxForSpecies &&
+                    animals.size() < Settings.MAX_ANIMALS_IN_LOCATION) {
+                animals.add(a);
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
             return false;
         }
-
-        int maxForSpecies = speciesInfo.maxCount;
-
-        long countOfSameType = animals.stream()
-                .filter(an -> an.getType().equals(type) && an.isAlive())
-                .count();
-
-        if (countOfSameType < maxForSpecies &&
-                animals.size() < Settings.MAX_ANIMALS_IN_LOCATION) {
-            animals.add(a);
-            return true;
-        }
-
-        return false;
     }
 
     public boolean addPlant(Plant p) {

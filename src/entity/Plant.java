@@ -1,13 +1,15 @@
 package entity;
 
+import config.SpeciesInfo;
+import config.Settings;
 import entity.island.Location;
-import util.Settings;
 
 public class Plant implements Eatable {
     private Location location;
     private boolean alive = true;
 
-    public Plant() {}
+    public Plant() {
+    }
 
     public void setLocation(Location location) {
         this.location = location;
@@ -15,7 +17,15 @@ public class Plant implements Eatable {
 
     @Override
     public double getWeight() {
-        return Settings.SPECIES.get("Plant").weight;
+        try {
+            SpeciesInfo plantInfo = Settings.SPECIES.get("Plant");
+            if (plantInfo != null) {
+                return plantInfo.weight;
+            }
+            return 1.0;
+        } catch (Exception e) {
+            return 1.0;
+        }
     }
 
     @Override
