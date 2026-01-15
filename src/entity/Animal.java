@@ -128,7 +128,6 @@ public abstract class Animal implements Eatable {
 
         try {
             if (Random.nextDouble() < probability) {
-                // Увеличиваем насыщение
                 double foodWeight = food.getWeight();
                 SpeciesInfo speciesInfo = Settings.SPECIES.get(animalType);
                 if (speciesInfo == null) {

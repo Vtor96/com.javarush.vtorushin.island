@@ -1,12 +1,13 @@
 package repository;
 
+import config.Settings;
+import config.SpeciesInfo;
 import entity.Animal;
 import entity.Plant;
 import entity.island.Island;
 import entity.island.Location;
 import util.AnimalFactory;
 import util.Random;
-import config.Settings;
 
 public class Fabric {
     public static Island createIsland() {
@@ -19,14 +20,20 @@ public class Fabric {
         }
 
         try {
-            int maxPlants = Settings.SPECIES.get("Plant").maxCount;
-            int minPlants = maxPlants / 3;
-            int plantCount = minPlants + util.Random.nextInt(maxPlants - minPlants + 1);
-            for (int i = 0; i < plantCount; i++) {
-                loc.addPlant(new Plant());
+            SpeciesInfo plantInfo = Settings.SPECIES.get("Plant");
+            if (plantInfo != null) {
+                int maxPlants = plantInfo.maxCount;
+                int minPlants = maxPlants / 3;
+                int range = maxPlants - minPlants + 1;
+                if (range > 0) {
+                    int plantCount = minPlants + Random.nextInt(range);
+                    for (int i = 0; i < plantCount; i++) {
+                        loc.addPlant(new Plant());
+                    }
+                }
             }
 
-            int herbivoreCount = 5 + util.Random.nextInt(4);
+            int herbivoreCount = 5 + Random.nextInt(4);
             for (int i = 0; i < herbivoreCount; i++) {
                 Animal herb = AnimalFactory.randomHerbivore(loc);
                 if (herb != null) {
@@ -34,14 +41,15 @@ public class Fabric {
                 }
             }
 
-            int predatorCount = 2 + util.Random.nextInt(3);
+            int predatorCount = 2 + Random.nextInt(3);
             for (int i = 0; i < predatorCount; i++) {
                 Animal pred = AnimalFactory.randomCarnivore(loc);
                 if (pred != null) {
                     loc.addAnimal(pred);
                 }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     public static void initIsland(Island island) {
@@ -81,6 +89,7 @@ public class Fabric {
                     loc.addPlant(new Plant());
                 }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 }

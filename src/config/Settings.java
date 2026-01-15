@@ -8,6 +8,7 @@ public class Settings {
 
     public static final int ISLAND_WIDTH = 100;
     public static final int ISLAND_HEIGHT = 20;
+
     public static final int MAX_ANIMALS_IN_LOCATION = 2545;
     public static final int MAX_PLANTS_PER_CELL = 200;
 
@@ -29,6 +30,7 @@ public class Settings {
     public static final String[] PLANTS = {"Plant"};
 
     public static final Map<String, Map<String, Double>> EAT_PROBABILITIES;
+
     static {
         Map<String, Map<String, Double>> eat = new LinkedHashMap<>();
 
@@ -67,25 +69,28 @@ public class Settings {
     }
 
     public static final Map<String, SpeciesInfo> SPECIES;
+
     static {
         Map<String, SpeciesInfo> map = new LinkedHashMap<>();
 
-        map.put("Wolf",        new SpeciesInfo(50.0,   30,   3,    8.0));
-        map.put("Boa",         new SpeciesInfo(15.0,   30,   1,    3.0));
-        map.put("Fox",         new SpeciesInfo(8.0,    30,   2,    2.0));
-        map.put("Bear",        new SpeciesInfo(500.0,  5,    2,   80.0));
-        map.put("Eagle",       new SpeciesInfo(6.0,    20,   3,    1.0));
-        map.put("Horse",       new SpeciesInfo(400.0,  20,   4,   60.0));
-        map.put("Deer",        new SpeciesInfo(300.0,  20,   4,   50.0));
-        map.put("Rabbit",      new SpeciesInfo(2.0,    150,  2,    0.45));
-        map.put("Mouse",       new SpeciesInfo(0.05,   500,  1,    0.01));
-        map.put("Goat",        new SpeciesInfo(60.0,   140,  3,   10.0));
-        map.put("Sheep",       new SpeciesInfo(70.0,   140,  3,   15.0));
-        map.put("Boar",        new SpeciesInfo(400.0,  50,   2,   50.0));
-        map.put("Buffalo",     new SpeciesInfo(700.0,  10,   3,  100.0));
-        map.put("Duck",        new SpeciesInfo(1.0,    200,  4,    0.15));
-        map.put("Caterpillar", new SpeciesInfo(0.01,   1000, 0,    0.0));
-        map.put("Plant",       new SpeciesInfo(1.0,    200,  0,    0.0));
+        map.put("Wolf", new SpeciesInfo(50.0, 30, 3, 8.0));
+        map.put("Boa", new SpeciesInfo(15.0, 30, 1, 3.0));
+        map.put("Fox", new SpeciesInfo(8.0, 30, 2, 2.0));
+        map.put("Bear", new SpeciesInfo(500.0, 5, 2, 80.0));
+        map.put("Eagle", new SpeciesInfo(6.0, 20, 3, 1.0));
+
+        map.put("Horse", new SpeciesInfo(400.0, 20, 4, 60.0));
+        map.put("Deer", new SpeciesInfo(300.0, 20, 4, 50.0));
+        map.put("Rabbit", new SpeciesInfo(2.0, 150, 2, 0.45));
+        map.put("Mouse", new SpeciesInfo(0.05, 500, 1, 0.01));
+        map.put("Goat", new SpeciesInfo(60.0, 140, 3, 10.0));
+        map.put("Sheep", new SpeciesInfo(70.0, 140, 3, 15.0));
+        map.put("Boar", new SpeciesInfo(400.0, 50, 2, 50.0));
+        map.put("Buffalo", new SpeciesInfo(700.0, 10, 3, 100.0));
+        map.put("Duck", new SpeciesInfo(1.0, 200, 4, 0.15));
+        map.put("Caterpillar", new SpeciesInfo(0.01, 1000, 0, 0.0));
+
+        map.put("Plant", new SpeciesInfo(1.0, 200, 0, 0.0));
 
         SPECIES = Collections.unmodifiableMap(map);
     }
