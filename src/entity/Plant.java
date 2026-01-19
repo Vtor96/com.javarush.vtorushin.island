@@ -1,7 +1,6 @@
 package entity;
 
-import config.SpeciesInfo;
-import config.Settings;
+import config.Species;
 import entity.island.Location;
 
 public class Plant implements Eatable {
@@ -17,20 +16,12 @@ public class Plant implements Eatable {
 
     @Override
     public double getWeight() {
-        try {
-            SpeciesInfo plantInfo = Settings.SPECIES.get("Plant");
-            if (plantInfo != null) {
-                return plantInfo.weight;
-            }
-            return 1.0;
-        } catch (Exception e) {
-            return 1.0;
-        }
+        return Species.PLANT.getWeight();
     }
 
     @Override
-    public String getType() {
-        return "Plant";
+    public Species getSpecies() {
+        return Species.PLANT;
     }
 
     @Override
@@ -41,6 +32,10 @@ public class Plant implements Eatable {
     @Override
     public void die() {
         this.alive = false;
+    }
+
+    public String getSymbol() {
+        return Species.PLANT.getEmoji();
     }
 
     @Override

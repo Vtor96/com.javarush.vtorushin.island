@@ -1,17 +1,20 @@
 package service;
 
 import config.Settings;
+import config.Species;
 import entity.Animal;
 import entity.island.Island;
 import entity.island.Location;
 import repository.Fabric;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutorService;
 
 public class SimulationScheduler {
 
@@ -29,9 +32,9 @@ public class SimulationScheduler {
         SimulationScheduler.island = island;
 
         Runnable growPlantsTask = () -> {
-            for (int y = 0; y < Settings.ISLAND_HEIGHT; y++) {
-                for (int x = 0; x < Settings.ISLAND_WIDTH; x++) {
-                    Location loc = island.getLocation(x, y);
+            for (int coordY = 0; coordY < Settings.ISLAND_HEIGHT; coordY++) {
+                for (int coordX = 0; coordX < Settings.ISLAND_WIDTH; coordX++) {
+                    Location loc = island.getLocation(coordX, coordY);
                     if (loc != null) {
                         Fabric.growPlants(loc);
                     }
@@ -40,90 +43,133 @@ public class SimulationScheduler {
         };
 
         Runnable animalLifecycleTask = () -> {
-            for (int y = 0; y < Settings.ISLAND_HEIGHT; y++) {
-                for (int x = 0; x < Settings.ISLAND_WIDTH; x++) {
-                    final int fx = x;
-                    final int fy = y;
+            for (int coordY = 0; coordY < Settings.ISLAND_HEIGHT; coordY++) {
+                for (int coordX = 0; coordX < Settings.ISLAND_WIDTH; coordX++) {
+                    final int finalCoordX = coordX;
+                    final int finalCoordY = coordY;
 
                     workerPool.submit(() -> {
-                        try {
-                            Location loc = island.getLocation(fx, fy);
-                            if (loc == null) {
-                                return;
-                            }
-
-                            ArrayList<Animal> animalsCopy = new ArrayList<>(loc.getAnimals());
-
-                            for (Animal animal : animalsCopy) {
-                                try {
-                                    if (!animal.isAlive()) {
-                                        continue;
-                                    }
-
-                                    animal.decreaseSatiety();
-
-                                    animal.tryToEat();
-
-                                    Animal offspring = animal.reproduce();
-                                    if (offspring != null) {
-                                        loc.addAnimal(offspring);
-                                    }
-
-                                    animal.age++;
-
-                                    if (animal.age > 100) {
-                                        animal.die();
-                                    }
-
-                                    if (animal.isAlive()) {
-                                        animal.chooseDirectionAndMove(loc);
-                                    }
-                                } catch (Exception e) {
-                                }
-                            }
-
-                            loc.removeDead();
-                        } catch (Exception e) {
+                        Location loc = island.getLocation(finalCoordX, finalCoordY);
+                        if (loc == null) {
+                            return;
                         }
+
+                        ArrayList<Animal> animalsCopy = new ArrayList<>(loc.getAnimals());
+
+                        for (Animal animal : animalsCopy) {
+                            if (!animal.isAlive()) {
+                                continue;
+                            }
+
+                            animal.decreaseSatiety();
+                            animal.tryToEat();
+
+                            Animal offspring = animal.reproduce();
+                            if (offspring != null) {
+                                loc.addAnimal(offspring);
+                            }
+
+                            animal.incrementAge();
+
+                            Integer animalAge = animal.getAge();
+                            if (animalAge != null && animalAge > 100) {
+                                animal.die();
+                            }
+
+                            if (animal.isAlive()) {
+                                animal.chooseDirectionAndMove(loc);
+                            }
+                        }
+
+                        loc.removeDead();
                     });
                 }
             }
         };
 
         Runnable statsTask = () -> {
-            try {
-                int totalPlants = 0;
-                int totalAnimals = 0;
-                int aliveAnimals = 0;
+            Map<Species, Integer> animalsByType = new EnumMap<>(Species.class);
+            Map<Species, Integer> aliveAnimalsByType = new EnumMap<>(Species.class);
+            for (Species species : Species.animals()) {
+                animalsByType.put(species, 0);
+                aliveAnimalsByType.put(species, 0);
+            }
 
-                for (int y = 0; y < Settings.ISLAND_HEIGHT; y++) {
-                    for (int x = 0; x < Settings.ISLAND_WIDTH; x++) {
-                        try {
-                            Location loc = island.getLocation(x, y);
-                            if (loc != null) {
-                                totalPlants += loc.getPlants().size();
-                                totalAnimals += loc.getAnimals().size();
-                                aliveAnimals += (int) loc.getAnimals().stream()
-                                        .filter(Animal::isAlive)
-                                        .count();
+            int totalPlants = 0;
+            int totalAnimals = 0;
+            int aliveAnimals = 0;
+
+            for (int coordY = 0; coordY < Settings.ISLAND_HEIGHT; coordY++) {
+                for (int coordX = 0; coordX < Settings.ISLAND_WIDTH; coordX++) {
+                    Location loc = island.getLocation(coordX, coordY);
+                    if (loc != null) {
+                        totalPlants += loc.getPlants().size();
+
+                        for (Animal animal : loc.getAnimals()) {
+                            Species species = animal.getSpecies();
+                            animalsByType.put(species, animalsByType.getOrDefault(species, 0) + 1);
+                            totalAnimals++;
+
+                            if (animal.isAlive()) {
+                                aliveAnimalsByType.put(species, aliveAnimalsByType.getOrDefault(species, 0) + 1);
+                                aliveAnimals++;
                             }
-                        } catch (Exception e) {
                         }
                     }
                 }
-
-                System.out.println("=== Статистика острова ===");
-                System.out.println("Растения: " + totalPlants);
-                System.out.println("Животные (всего): " + totalAnimals);
-                System.out.println("Животные (живые): " + aliveAnimals);
-                System.out.println("=========================");
-            } catch (Exception e) {
             }
+
+            printStats(animalsByType, aliveAnimalsByType, totalPlants, totalAnimals, aliveAnimals);
         };
 
         scheduler.scheduleAtFixedRate(growPlantsTask, 0, 5, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(animalLifecycleTask, 1, 2, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(statsTask, 2, 5, TimeUnit.SECONDS);
+    }
+
+    private static void printStats(Map<Species, Integer> animalsByType,
+                                   Map<Species, Integer> aliveAnimalsByType,
+                                   int totalPlants,
+                                   int totalAnimals,
+                                   int aliveAnimals) {
+        String divider = "╠════════════════════════════════════════════════════════╣";
+        System.out.println("\n╔════════════════════════════════════════════════════════╗");
+        System.out.println("║                   СТАТИСТИКА ОСТРОВА                    ║");
+        System.out.println(divider);
+
+        System.out.printf("║ Растения %s: %5d%34s%n", Species.PLANT.getEmoji(), totalPlants, "║");
+        System.out.println(divider);
+
+        System.out.println("║ ХИЩНИКИ:                                                ║");
+        printGroup(Species.carnivores(), animalsByType, aliveAnimalsByType);
+        System.out.println(divider);
+
+        System.out.println("║ ТРАВОЯДНЫЕ:                                             ║");
+        printGroup(Species.herbivores(), animalsByType, aliveAnimalsByType);
+        System.out.println(divider);
+
+        System.out.printf("║ Животных всего: %5d%31s%n", totalAnimals, "║");
+        System.out.printf("║ Животных живых: %5d%30s%n", aliveAnimals, "║");
+        System.out.printf("║ Растений:      %5d%32s%n", totalPlants, "║");
+        System.out.println("╚════════════════════════════════════════════════════════╝");
+    }
+
+    private static void printGroup(Iterable<Species> group,
+                                   Map<Species, Integer> totals,
+                                   Map<Species, Integer> alive) {
+        for (Species species : group) {
+            int total = totals.getOrDefault(species, 0);
+            int aliveCount = alive.getOrDefault(species, 0);
+            if (total == 0 && aliveCount == 0) {
+                continue;
+            }
+            System.out.printf("║   %s %-12s: всего=%4d, живых=%4d%12s%n",
+                    species.getEmoji(),
+                    species.getDisplayName(),
+                    total,
+                    aliveCount,
+                    "║");
+        }
     }
 
     public static void shutdown() {
@@ -149,15 +195,9 @@ public class SimulationScheduler {
         @Override
         public void close() throws Exception {
             if (executor != null && !executor.isShutdown()) {
-                try {
-                    executor.shutdownNow();
-                    if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        System.err.println(name + " не завершился вовремя");
-                    }
-                } catch (InterruptedException e) {
-                    executor.shutdownNow();
-                    Thread.currentThread().interrupt();
-                    throw e;
+                executor.shutdownNow();
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    System.err.println(name + " не завершился вовремя");
                 }
             }
         }

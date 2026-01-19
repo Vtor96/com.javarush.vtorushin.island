@@ -1,20 +1,12 @@
 package entity.predator;
 
+import config.Species;
 import entity.Animal;
 import entity.island.Location;
 
 abstract class Carnivore extends Animal {
-    public Carnivore(Location l) {
-        super(l);
-    }
 
-    @Override
-    public String getType() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
-    public boolean isAlive() {
-        return super.isAlive();
+    protected Carnivore(Location l, Species species) {
+        super(l, species);
     }
 }

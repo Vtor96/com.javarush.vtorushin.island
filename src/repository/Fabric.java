@@ -1,15 +1,21 @@
 package repository;
 
 import config.Settings;
-import config.SpeciesInfo;
+import config.Species;
 import entity.Animal;
 import entity.Plant;
+import entity.herbivore.*;
 import entity.island.Island;
 import entity.island.Location;
-import util.AnimalFactory;
+import entity.predator.*;
 import util.Random;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 public class Fabric {
+
     public static Island createIsland() {
         return new Island(Settings.ISLAND_WIDTH, Settings.ISLAND_HEIGHT);
     }
@@ -19,37 +25,9 @@ public class Fabric {
             return;
         }
 
-        try {
-            SpeciesInfo plantInfo = Settings.SPECIES.get("Plant");
-            if (plantInfo != null) {
-                int maxPlants = plantInfo.maxCount;
-                int minPlants = maxPlants / 3;
-                int range = maxPlants - minPlants + 1;
-                if (range > 0) {
-                    int plantCount = minPlants + Random.nextInt(range);
-                    for (int i = 0; i < plantCount; i++) {
-                        loc.addPlant(new Plant());
-                    }
-                }
-            }
-
-            int herbivoreCount = 5 + Random.nextInt(4);
-            for (int i = 0; i < herbivoreCount; i++) {
-                Animal herb = AnimalFactory.randomHerbivore(loc);
-                if (herb != null) {
-                    loc.addAnimal(herb);
-                }
-            }
-
-            int predatorCount = 2 + Random.nextInt(3);
-            for (int i = 0; i < predatorCount; i++) {
-                Animal pred = AnimalFactory.randomCarnivore(loc);
-                if (pred != null) {
-                    loc.addAnimal(pred);
-                }
-            }
-        } catch (Exception e) {
-        }
+        seedPlants(loc);
+        seedAnimals(loc, Species.herbivores(), 5, 3);
+        seedAnimals(loc, Species.carnivores(), 2, 2);
     }
 
     public static void initIsland(Island island) {
@@ -60,9 +38,9 @@ public class Fabric {
         System.out.println("Инициализация острова...");
         int totalLocations = 0;
 
-        for (int y = 0; y < Settings.ISLAND_HEIGHT; y++) {
-            for (int x = 0; x < Settings.ISLAND_WIDTH; x++) {
-                Location loc = island.getLocation(x, y);
+        for (int coordY = 0; coordY < Settings.ISLAND_HEIGHT; coordY++) {
+            for (int coordX = 0; coordX < Settings.ISLAND_WIDTH; coordX++) {
+                Location loc = island.getLocation(coordX, coordY);
                 if (loc != null) {
                     initLocation(loc);
                     totalLocations++;
@@ -78,18 +56,73 @@ public class Fabric {
             return;
         }
 
-        try {
-            int current = loc.getPlants().size();
-            int maxPlants = Settings.MAX_PLANTS_PER_CELL;
+        int current = loc.getPlants().size();
+        int maxPlants = Settings.MAX_PLANTS_PER_CELL;
 
-            if (current < maxPlants * 0.8) {
-                int toGrow = maxPlants - current;
-                int newPlants = Math.min(1 + Random.nextInt(3), toGrow);
-                for (int i = 0; i < newPlants; i++) {
-                    loc.addPlant(new Plant());
-                }
+        if (current < maxPlants * 0.8) {
+            int toGrow = maxPlants - current;
+            int newPlants = Math.min(1 + Random.nextInt(3), toGrow);
+            for (int i = 0; i < newPlants; i++) {
+                loc.addPlant(new Plant());
             }
-        } catch (Exception e) {
         }
+    }
+
+    private static void seedPlants(Location loc) {
+        int maxPlants = Species.PLANT.getMaxCount();
+        int minPlants = maxPlants / 3;
+        int range = maxPlants - minPlants + 1;
+        if (range > 0) {
+            int plantCount = minPlants + Random.nextInt(range);
+            for (int i = 0; i < plantCount; i++) {
+                loc.addPlant(new Plant());
+            }
+        }
+    }
+
+    private static void seedAnimals(Location loc, EnumSet<Species> pool, int base, int variance) {
+        int count = base + Random.nextInt(variance + 1);
+        List<Species> speciesList = new ArrayList<>(pool);
+        for (int i = 0; i < count; i++) {
+            Species species = speciesList.get(Random.nextInt(speciesList.size()));
+            Animal animal = createAnimal(species, loc);
+            if (animal != null) {
+                loc.addAnimal(animal);
+            }
+        }
+    }
+
+    public static Animal randomHerbivore(Location location) {
+        return createAnimal(randomFromPool(Species.herbivores()), location);
+    }
+
+    public static Animal randomCarnivore(Location location) {
+        return createAnimal(randomFromPool(Species.carnivores()), location);
+    }
+
+    private static Species randomFromPool(EnumSet<Species> pool) {
+        List<Species> list = new ArrayList<>(pool);
+        return list.get(Random.nextInt(list.size()));
+    }
+
+    private static Animal createAnimal(Species species, Location loc) {
+        return switch (species) {
+            case HORSE -> new Horse(loc);
+            case DEER -> new Deer(loc);
+            case RABBIT -> new Rabbit(loc);
+            case MOUSE -> new Mouse(loc);
+            case GOAT -> new Goat(loc);
+            case SHEEP -> new Sheep(loc);
+            case BOAR -> new Boar(loc);
+            case BUFFALO -> new Buffalo(loc);
+            case DUCK -> new Duck(loc);
+            case CATERPILLAR -> new Caterpillar(loc);
+            case WOLF -> new Wolf(loc);
+            case BOA -> new Boa(loc);
+            case FOX -> new Fox(loc);
+            case BEAR -> new Bear(loc);
+            case EAGLE -> new Eagle(loc);
+            default -> null;
+        };
     }
 }

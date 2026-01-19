@@ -1,8 +1,7 @@
 package entity.island;
 
-
 import config.Settings;
-import config.SpeciesInfo;
+import config.Species;
 import entity.Animal;
 import entity.Plant;
 
@@ -11,14 +10,15 @@ import java.util.List;
 
 public class Location {
 
-    private int x, y;
-    private Island island;
-    private List<Animal> animals = new ArrayList<>();
-    private List<Plant> plants = new ArrayList<>();
+    private final int coordX;
+    private final int coordY;
+    private final Island island;
+    private final List<Animal> animals = new ArrayList<>();
+    private final List<Plant> plants = new ArrayList<>();
 
-    public Location(int x, int y, Island island) {
-        this.x = x;
-        this.y = y;
+    public Location(int coordX, int coordY, Island island) {
+        this.coordX = coordX;
+        this.coordY = coordY;
         this.island = island;
     }
 
@@ -27,30 +27,18 @@ public class Location {
             return false;
         }
 
-        try {
-            String type = a.getType();
-            SpeciesInfo speciesInfo = Settings.SPECIES.get(type);
+        Species species = a.getSpecies();
+        long countOfSameType = animals.stream()
+                .filter(an -> an.isAlive() && an.getSpecies() == species)
+                .count();
 
-            if (speciesInfo == null) {
-                return false;
-            }
-
-            int maxForSpecies = speciesInfo.maxCount;
-
-            long countOfSameType = animals.stream()
-                    .filter(an -> an.getType().equals(type) && an.isAlive())
-                    .count();
-
-            if (countOfSameType < maxForSpecies &&
-                    animals.size() < Settings.MAX_ANIMALS_IN_LOCATION) {
-                animals.add(a);
-                return true;
-            }
-
-            return false;
-        } catch (Exception e) {
-            return false;
+        if (countOfSameType < species.getMaxCount() &&
+                animals.size() < Settings.MAX_ANIMALS_IN_LOCATION) {
+            animals.add(a);
+            return true;
         }
+
+        return false;
     }
 
     public boolean addPlant(Plant p) {
@@ -75,12 +63,12 @@ public class Location {
         return plants;
     }
 
-    public int getX() {
-        return x;
+    public int getCoordX() {
+        return coordX;
     }
 
-    public int getY() {
-        return y;
+    public int getCoordY() {
+        return coordY;
     }
 
     public Island getIsland() {

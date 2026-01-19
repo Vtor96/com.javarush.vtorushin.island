@@ -1,7 +1,6 @@
 package entity;
 
-import config.Settings;
-import config.SpeciesInfo;
+import config.Species;
 import entity.island.Location;
 import util.Random;
 
@@ -9,59 +8,35 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class Animal implements Eatable {
-    protected Location location;
-    protected double weight;
-    public int age;
-    protected boolean alive = true;
-    protected double satiety;
+    private final Species species;
+    private Location location;
+    private final double baseWeight;
+    private Integer age = 0;
+    private boolean alive = true;
+    private Double satiety;
 
-    public Animal(Location location) {
+    protected Animal(Location location, Species species) {
         this.location = location;
-        this.age = 0;
-        try {
-            SpeciesInfo speciesInfo = Settings.SPECIES.get(getType());
-            if (speciesInfo != null) {
-                this.weight = speciesInfo.weight;
-            } else {
-                this.weight = 1.0;
-            }
-        } catch (Exception e) {
-            this.weight = 1.0;
-        }
+        this.species = species;
+        this.baseWeight = species.getWeight();
         this.satiety = 1.0;
     }
 
     @Override
-    public boolean equals(Object o) {
-        return super.equals(o);
+    public Species getSpecies() {
+        return species;
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
+    public String getType() {
+        return getSpecies().getDisplayName();
     }
 
-    @Override
-    public double getWeight() {
-        try {
-            SpeciesInfo speciesInfo = Settings.SPECIES.get(getType());
-            if (speciesInfo != null) {
-                return speciesInfo.weight;
-            }
-            return 1.0;
-        } catch (Exception e) {
-            return 1.0;
-        }
+    public String getSymbol() {
+        return getSpecies().getEmoji();
     }
-
-    public abstract String getType();
 
     public void move(Location newLocation) {
-        if (newLocation == null || !isAlive()) {
-            return;
-        }
-
-        if (newLocation == this.location) {
+        if (newLocation == null || !isAlive() || newLocation == this.location) {
             return;
         }
 
@@ -78,33 +53,21 @@ public abstract class Animal implements Eatable {
             return;
         }
 
-        try {
-            SpeciesInfo speciesInfo = Settings.SPECIES.get(getType());
-            if (speciesInfo == null) {
-                return;
-            }
+        int maxSpeed = getSpecies().getMaxSpeed();
+        if (maxSpeed <= 0) {
+            return;
+        }
 
-            int maxSpeed = speciesInfo.maxSpeed;
-            if (maxSpeed == 0) {
-                return;
-            }
+        int range = 2 * maxSpeed + 1;
+        int deltaX = Random.nextInt(range) - maxSpeed;
+        int deltaY = Random.nextInt(range) - maxSpeed;
 
-            int range = 2 * maxSpeed + 1;
-            if (range <= 0) {
-                return;
-            }
+        int newCoordX = currentLocation.getCoordX() + deltaX;
+        int newCoordY = currentLocation.getCoordY() + deltaY;
+        Location newLocation = currentLocation.getIsland().getLocation(newCoordX, newCoordY);
 
-            int dx = Random.nextInt(range) - maxSpeed;
-            int dy = Random.nextInt(range) - maxSpeed;
-
-            int newX = currentLocation.getX() + dx;
-            int newY = currentLocation.getY() + dy;
-            Location newLocation = currentLocation.getIsland().getLocation(newX, newY);
-
-            if (newLocation != null) {
-                move(newLocation);
-            }
-        } catch (Exception e) {
+        if (newLocation != null) {
+            move(newLocation);
         }
     }
 
@@ -113,104 +76,72 @@ public abstract class Animal implements Eatable {
             return false;
         }
 
-        String animalType = getType();
-        String foodType = food.getType();
-
-        Map<String, Double> probabilities = Settings.EAT_PROBABILITIES.get(animalType);
-        if (probabilities == null) {
-            return false;
-        }
-
-        Double probability = probabilities.get(foodType);
+        Map<Species, Double> probabilities = getSpecies().getDiet();
+        Double probability = probabilities.get(food.getSpecies());
         if (probability == null || probability <= 0) {
             return false;
         }
 
-        try {
-            if (Random.nextDouble() < probability) {
-                double foodWeight = food.getWeight();
-                SpeciesInfo speciesInfo = Settings.SPECIES.get(animalType);
-                if (speciesInfo == null) {
-                    return false;
-                }
-
-                double foodRequired = speciesInfo.foodRequired;
-                if (foodRequired > 0) {
-                    satiety = Math.min(1.0, satiety + (foodWeight / foodRequired));
-                } else {
-                    satiety = Math.min(1.0, satiety + 0.1);
-                }
-
-                food.die();
-
-                if (food instanceof Plant) {
-                    location.getPlants().remove(food);
-                } else if (food instanceof Animal) {
-                    location.getAnimals().remove(food);
-                }
-
-                return true;
+        if (Random.nextDouble() < probability) {
+            double foodWeight = food.getWeight();
+            double foodRequired = getSpecies().getFoodRequired();
+            if (foodRequired > 0) {
+                satiety = Math.min(1.0, satiety + (foodWeight / foodRequired));
+            } else {
+                satiety = Math.min(1.0, satiety + 0.1);
             }
-        } catch (Exception e) {
-            return false;
+
+            food.die();
+
+            if (food instanceof Plant) {
+                location.getPlants().remove(food);
+            } else if (food instanceof Animal) {
+                location.getAnimals().remove(food);
+            }
+
+            return true;
         }
+
         return false;
     }
 
     public boolean tryToEat() {
-        if (!isAlive() || location == null) {
+        if (!isAlive() || location == null || satiety >= 1.0) {
             return false;
         }
 
-        if (satiety >= 1.0) {
-            return false;
-        }
+        Map<Species, Double> probabilities = getSpecies().getDiet();
+        boolean ateSomething = false;
 
-        try {
-            String animalType = getType();
-            Map<String, Double> probabilities = Settings.EAT_PROBABILITIES.get(animalType);
-            if (probabilities == null) {
-                return false;
-            }
-
-            boolean ateSomething = false;
-
-            List<Animal> animals = location.getAnimals();
-            for (Animal potentialFood : new java.util.ArrayList<>(animals)) {
-                if (potentialFood != this && potentialFood.isAlive()) {
-                    String foodType = potentialFood.getType();
-                    if (probabilities.containsKey(foodType)) {
-                        if (eat(potentialFood)) {
-                            ateSomething = true;
-                            if (satiety < 0.3 && satiety < 1.0) {
-                            } else {
-                                break;
-                            }
+        List<Animal> animals = location.getAnimals();
+        for (Animal potentialFood : new java.util.ArrayList<>(animals)) {
+            if (potentialFood != this && potentialFood.isAlive()) {
+                if (probabilities.containsKey(potentialFood.getSpecies())) {
+                    if (eat(potentialFood)) {
+                        ateSomething = true;
+                        if (satiety < 0.3 && satiety < 1.0) {
+                            continue;
+                        } else {
+                            break;
                         }
                     }
                 }
             }
+        }
 
-            if (satiety < 1.0) {
-                List<Plant> plants = location.getPlants();
-                if (probabilities.containsKey("Plant")) {
-                    for (Plant plant : new java.util.ArrayList<>(plants)) {
-                        if (plant.isAlive()) {
-                            if (eat(plant)) {
-                                ateSomething = true;
-                                if (satiety >= 0.8) {
-                                    break;
-                                }
-                            }
-                        }
+        if (satiety < 1.0 && probabilities.containsKey(Species.PLANT)) {
+            List<Plant> plants = location.getPlants();
+            for (Plant plant : new java.util.ArrayList<>(plants)) {
+                if (plant.isAlive() && eat(plant)) {
+                    ateSomething = true;
+                    if (satiety >= 0.8) {
+                        break;
                     }
                 }
             }
-
-            return ateSomething;
-        } catch (Exception e) {
-            return false;
         }
+
+        return ateSomething;
     }
 
     public Animal reproduce() {
@@ -218,14 +149,10 @@ public abstract class Animal implements Eatable {
             return null;
         }
 
-        String myType = getType();
-        int sameTypeCount = 0;
-
-        for (Animal animal : location.getAnimals()) {
-            if (animal.getType().equals(myType) && animal.isAlive()) {
-                sameTypeCount++;
-            }
-        }
+        Species mySpecies = getSpecies();
+        long sameTypeCount = location.getAnimals().stream()
+                .filter(animal -> animal.isAlive() && animal.getSpecies() == mySpecies)
+                .count();
 
         if (sameTypeCount < 2) {
             return null;
@@ -236,9 +163,7 @@ public abstract class Animal implements Eatable {
             try {
                 Class<? extends Animal> animalClass = this.getClass();
                 Animal offspring = animalClass.getDeclaredConstructor(Location.class).newInstance(location);
-
                 satiety *= 0.7;
-
                 return offspring;
             } catch (Exception e) {
                 return null;
@@ -253,22 +178,14 @@ public abstract class Animal implements Eatable {
             return;
         }
 
-        try {
-            SpeciesInfo speciesInfo = Settings.SPECIES.get(getType());
-            if (speciesInfo == null) {
-                return;
-            }
+        double foodRequired = getSpecies().getFoodRequired();
+        satiety -= (foodRequired / 1000.0) * 0.05;
+        if (satiety < 0) {
+            satiety = 0.0;
+        }
 
-            double foodRequired = speciesInfo.foodRequired;
-            satiety -= (foodRequired / 1000.0) * 0.05;
-            if (satiety < 0) {
-                satiety = 0;
-            }
-
-            if (satiety <= 0) {
-                die();
-            }
-        } catch (Exception e) {
+        if (satiety <= 0) {
+            die();
         }
     }
 
@@ -281,11 +198,32 @@ public abstract class Animal implements Eatable {
         return alive;
     }
 
+    @Override
+    public double getWeight() {
+        return baseWeight;
+    }
+
     public Location getLocation() {
         return location;
     }
 
-    public double getSatiety() {
+    public Double getSatiety() {
         return satiety;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void incrementAge() {
+        if (age == null) {
+            age = 1;
+        } else {
+            age++;
+        }
     }
 }
