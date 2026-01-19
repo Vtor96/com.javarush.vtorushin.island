@@ -177,6 +177,7 @@ public class SimulationScheduler {
 
         try (AutoCloseableExecutorService schedulerWrapper = new AutoCloseableExecutorService(scheduler, "Scheduler");
              AutoCloseableExecutorService workerPoolWrapper = new AutoCloseableExecutorService(workerPool, "Worker pool")) {
+            // resources auto-closed
         } catch (Exception e) {
             System.err.println("Ошибка при закрытии ресурсов: " + e.getMessage());
         }
