@@ -124,7 +124,7 @@ public class SimulationScheduler {
 
         scheduler.scheduleAtFixedRate(growPlantsTask, 0, 5, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(animalLifecycleTask, 1, 2, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(statsTask, 2, 5, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(statsTask, 0, 5, TimeUnit.SECONDS);
     }
 
     private static void printStats(Map<Species, Integer> animalsByType,
@@ -177,7 +177,6 @@ public class SimulationScheduler {
 
         try (AutoCloseableExecutorService schedulerWrapper = new AutoCloseableExecutorService(scheduler, "Scheduler");
              AutoCloseableExecutorService workerPoolWrapper = new AutoCloseableExecutorService(workerPool, "Worker pool")) {
-            // resources auto-closed
         } catch (Exception e) {
             System.err.println("Ошибка при закрытии ресурсов: " + e.getMessage());
         }
