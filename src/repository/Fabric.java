@@ -83,26 +83,21 @@ public class Fabric {
     private static void seedAnimals(Location loc, EnumSet<Species> pool, int base, int variance) {
         int count = base + Random.nextInt(variance + 1);
         List<Species> speciesList = new ArrayList<>(pool);
-        for (int i = 0; i < count; i++) {
+
+        for (Species species : speciesList) {
+            Animal animal = createAnimal(species, loc);
+            if (animal != null) {
+                loc.addAnimal(animal);
+            }
+        }
+
+        for (int i = speciesList.size(); i < count; i++) {
             Species species = speciesList.get(Random.nextInt(speciesList.size()));
             Animal animal = createAnimal(species, loc);
             if (animal != null) {
                 loc.addAnimal(animal);
             }
         }
-    }
-
-    public static Animal randomHerbivore(Location location) {
-        return createAnimal(randomFromPool(Species.herbivores()), location);
-    }
-
-    public static Animal randomCarnivore(Location location) {
-        return createAnimal(randomFromPool(Species.carnivores()), location);
-    }
-
-    private static Species randomFromPool(EnumSet<Species> pool) {
-        List<Species> list = new ArrayList<>(pool);
-        return list.get(Random.nextInt(list.size()));
     }
 
     private static Animal createAnimal(Species species, Location loc) {

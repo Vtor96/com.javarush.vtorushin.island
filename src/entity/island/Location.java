@@ -6,6 +6,7 @@ import entity.Animal;
 import entity.Plant;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Location {
@@ -76,7 +77,12 @@ public class Location {
     }
 
     public void removeDead() {
-        animals.removeIf(animal -> !animal.isAlive());
-        plants.removeIf(plant -> !plant.isAlive());
+        Iterator<Animal> iterator = animals.iterator();
+        while (iterator.hasNext()) {
+            Animal animal = iterator.next();
+            if (animal == null || !animal.isAlive()) {
+                iterator.remove();
+            }
+        }
     }
 }
