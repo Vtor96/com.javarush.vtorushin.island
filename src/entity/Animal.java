@@ -4,13 +4,10 @@ import config.Species;
 import entity.island.Location;
 import util.Random;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public abstract class Animal implements Eatable {
-    private static final double EFFICIENCY = 0.5;
-
     private final Species species;
     private Location location;
     private final double baseWeight;

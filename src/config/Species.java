@@ -81,20 +81,8 @@ public enum Species {
         return HERBIVORES.contains(this);
     }
 
-    public boolean isCarnivore() {
-        return CARNIVORES.contains(this);
-    }
-
-    public boolean isPlant() {
-        return this == PLANT;
-    }
-
     public Map<Species, Double> getDiet() {
         return DIET.getOrDefault(this, Map.of());
-    }
-
-    public static Species byName(String displayName) {
-        return BY_NAME.get(displayName);
     }
 
     public static EnumSet<Species> herbivores() {
@@ -107,10 +95,6 @@ public enum Species {
 
     public static EnumSet<Species> animals() {
         return EnumSet.complementOf(EnumSet.of(PLANT));
-    }
-
-    public static Map<Species, Map<Species, Double>> diet() {
-        return DIET;
     }
 
     private static Map<Species, Map<Species, Double>> buildDiet() {

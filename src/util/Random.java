@@ -11,15 +11,7 @@ public class Random {
         return getRandom().nextInt(bound);
     }
 
-    public static int nextInt(int origin, int bound) {
-        return getRandom().nextInt(origin, bound);
-    }
-
     public static double nextDouble() {
         return getRandom().nextDouble();
-    }
-
-    public static double nextDouble(double origin, double bound) {
-        return getRandom().nextDouble(origin, bound);
     }
 }

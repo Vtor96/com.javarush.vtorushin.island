@@ -1,6 +1,5 @@
 package entity.island;
 
-import config.Settings;
 import config.Species;
 import entity.Animal;
 import entity.Plant;
@@ -37,11 +36,11 @@ public class Location {
     }
 
     public synchronized List<Animal> getAnimals() {
-        return new ArrayList<>(animals); // Возвращаем копию для безопасности
+        return new ArrayList<>(animals);
     }
 
     public synchronized List<Plant> getPlants() {
-        return new ArrayList<>(plants); // Возвращаем копию для безопасности
+        return new ArrayList<>(plants);
     }
 
     public synchronized List<Animal> getLivingAnimals() {
@@ -93,21 +92,9 @@ public class Location {
         return true;
     }
 
-    public synchronized void removePlant(Plant plant) {
-        if (plant != null) {
-            plants.remove(plant);
-        }
-    }
-
     public synchronized void removeDead() {
         animals.removeIf(animal -> !animal.isAlive());
         plants.removeIf(plant -> !plant.isAlive());
-    }
-
-    public synchronized long countSpecies(Species species) {
-        return animals.stream()
-                .filter(animal -> animal.isAlive() && animal.getSpecies().equals(species))
-                .count();
     }
 
     public synchronized boolean isOvercrowded() {
