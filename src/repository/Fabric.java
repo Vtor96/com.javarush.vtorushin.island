@@ -32,6 +32,7 @@ public class Fabric {
 
     public static void initIsland(Island island) {
         if (island == null) {
+            System.err.println("Fabric.initIsland: остров null!");
             return;
         }
 

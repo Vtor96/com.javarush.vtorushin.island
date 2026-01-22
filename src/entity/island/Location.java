@@ -6,62 +6,22 @@ import entity.Animal;
 import entity.Plant;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Location {
 
     private final int coordX;
     private final int coordY;
     private final Island island;
-    private final List<Animal> animals = new ArrayList<>();
-    private final List<Plant> plants = new ArrayList<>();
+    private final List<Animal> animals = Collections.synchronizedList(new ArrayList<>());
+    private final List<Plant> plants = Collections.synchronizedList(new ArrayList<>());
 
     public Location(int coordX, int coordY, Island island) {
         this.coordX = coordX;
         this.coordY = coordY;
         this.island = island;
-    }
-
-    public boolean addAnimal(Animal a) {
-        if (a == null) {
-            return false;
-        }
-
-        Species species = a.getSpecies();
-        long countOfSameType = animals.stream()
-                .filter(an -> an.isAlive() && an.getSpecies() == species)
-                .count();
-
-        if (countOfSameType < species.getMaxCount() &&
-                animals.size() < Settings.MAX_ANIMALS_IN_LOCATION) {
-            animals.add(a);
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean addPlant(Plant p) {
-        if (p == null) {
-            return false;
-        }
-
-        if (plants.size() < Settings.MAX_PLANTS_PER_CELL) {
-            plants.add(p);
-            p.setLocation(this);
-            return true;
-        }
-
-        return false;
-    }
-
-    public List<Animal> getAnimals() {
-        return animals;
-    }
-
-    public List<Plant> getPlants() {
-        return plants;
     }
 
     public int getCoordX() {
@@ -76,13 +36,94 @@ public class Location {
         return island;
     }
 
-    public void removeDead() {
-        Iterator<Animal> iterator = animals.iterator();
-        while (iterator.hasNext()) {
-            Animal animal = iterator.next();
-            if (animal == null || !animal.isAlive()) {
-                iterator.remove();
+    public synchronized List<Animal> getAnimals() {
+        return new ArrayList<>(animals); // Возвращаем копию для безопасности
+    }
+
+    public synchronized List<Plant> getPlants() {
+        return new ArrayList<>(plants); // Возвращаем копию для безопасности
+    }
+
+    public synchronized List<Animal> getLivingAnimals() {
+        return animals.stream()
+                .filter(Animal::isAlive)
+                .collect(Collectors.toList());
+    }
+
+    public synchronized List<Plant> getLivingPlants() {
+        return plants.stream()
+                .filter(Plant::isAlive)
+                .collect(Collectors.toList());
+    }
+
+    public synchronized boolean addAnimal(Animal animal) {
+        if (animal == null || !animal.isAlive()) {
+            return false;
+        }
+
+        Species species = animal.getSpecies();
+        long currentCount = animals.stream()
+                .filter(a -> a.isAlive() && a.getSpecies() == species)
+                .count();
+
+        if (currentCount >= species.getMaxCount()) {
+            return false;
+        }
+
+        animals.add(animal);
+        return true;
+    }
+
+    public synchronized void removeAnimal(Animal animal) {
+        if (animal != null) {
+            animals.remove(animal);
+        }
+    }
+
+    public synchronized boolean addPlant(Plant plant) {
+        if (plant == null || !plant.isAlive()) {
+            return false;
+        }
+
+        if (plants.size() >= Species.PLANT.getMaxCount()) {
+            return false;
+        }
+
+        plants.add(plant);
+        return true;
+    }
+
+    public synchronized void removePlant(Plant plant) {
+        if (plant != null) {
+            plants.remove(plant);
+        }
+    }
+
+    public synchronized void removeDead() {
+        animals.removeIf(animal -> !animal.isAlive());
+        plants.removeIf(plant -> !plant.isAlive());
+    }
+
+    public synchronized long countSpecies(Species species) {
+        return animals.stream()
+                .filter(animal -> animal.isAlive() && animal.getSpecies().equals(species))
+                .count();
+    }
+
+    public synchronized boolean isOvercrowded() {
+        for (Species species : Species.animals()) {
+            long count = animals.stream()
+                    .filter(animal -> animal.isAlive() && animal.getSpecies() == species)
+                    .count();
+            if (count >= species.getMaxCount()) {
+                return true;
             }
         }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Location[%d,%d]", coordX, coordY);
     }
 }
